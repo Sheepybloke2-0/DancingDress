@@ -1,14 +1,21 @@
 #include <FastLED.h>
+#include <Adafruit_LIS3DH.h>
+#include <Adafruit_Sensor.h>
+#include <math.h>
+#include <Wire.h>
 
+#define ACCEL_INTERRUPT_PIN 27
+#define ACCEL_ADDR 0x19
 #define LEFT_BUTTON 4
 #define RIGHT_BUTTON 5
 #define LED_PIN 8
 #define LED_COUNT 10
-#define MAX_MOVING 248
-#define MAX_STATIONARY 184
+#define MAX_STATIONARY 248
 #define CHANGE_COLOR 36
 #define RANGE 8
 #define FPS 10
+#define SENSOR_SENSITIVITY LIS3DH_RANGE_8_G
+#define GRAVITY 9.8
 
 typedef struct firectx {
     uint8_t index;
@@ -19,9 +26,25 @@ typedef struct firectx {
 firectx ctx[LED_COUNT] = {0};
 
 CRGB strip[LED_COUNT];
+Adafruit_LIS3DH lis = Adafruit_LIS3DH(&Wire1);
+float max_sensor_value = 0;
+float avg = 0.0;
 
 void setup() {
     randomSeed(analogRead(9)); // Just make sure that this is unconnected.
+    if (! lis.begin(ACCEL_ADDR)) {   // Express has 0x19
+        while (1) yield();
+    }
+    lis.setRange(SENSOR_SENSITIVITY);
+    if (SENSOR_SENSITIVITY == LIS3DH_RANGE_2_G) {
+       max_sensor_value = GRAVITY * 2;
+    } else if (SENSOR_SENSITIVITY == LIS3DH_RANGE_4_G) {
+       max_sensor_value = GRAVITY * 4;
+    } else if (SENSOR_SENSITIVITY == LIS3DH_RANGE_8_G) {
+       max_sensor_value = GRAVITY * 8;
+    } else if (SENSOR_SENSITIVITY == LIS3DH_RANGE_16_G) {
+       max_sensor_value = GRAVITY * 16;
+    }
     FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
         ctx[idx].index = idx;
@@ -33,11 +56,24 @@ void setup() {
 }
 
 void loop() {
+    avg = calculateMagnitude();
+    // max_brightness = uint8_t(avg * (MAX_MOVING - MAX_STATIONARY)) + MAX_STATIONARY);
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
         setLed(&ctx[idx]);
     }
     FastLED.show();
     FastLED.delay(1000/FPS);
+}
+
+float calculateMagnitude() {
+    sensors_event_t event = {0};
+    float avgs = 0;
+    lis.getEvent(&event);
+    avgs += (event.acceleration.x / max_sensor_value);
+    avgs += (event.acceleration.y / max_sensor_value);
+    avgs += (event.acceleration.z / max_sensor_value);
+    avgs /= 3;
+    return avgs;
 }
 
 void setLed(firectx* ctx) {
@@ -47,7 +83,6 @@ void setLed(firectx* ctx) {
     } else {
         ctx->brightness = random(ctx->brightness - RANGE, ctx->brightness + 1);
     }
-    strip[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
 
     // If the brightness is small enough, choose a different color.
     if (ctx->brightness < CHANGE_COLOR) {
@@ -62,6 +97,7 @@ void setLed(firectx* ctx) {
             ctx->accending = ~ctx->accending;
         }
     }
+    strip[ctx->index] = CHSV(ctx->color, 255, uint8_t(ctx->brightness*avg));
 }
 
 void setPixelColors(firectx* ctx) {
@@ -75,5 +111,6 @@ void setPixelColors(firectx* ctx) {
     } else if (value < ORANGE_RANGE) {
         ctx->color = random(HUE_ORANGE, HUE_YELLOW - 16);
     }
-    strip[ctx->index] = CHSV(ctx->color, random(100,256), ctx->brightness);
+    // strip[ctx->index] = CHSV(ctx->color, random(100,256), ctx->brightness);
+    strip[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
 }
