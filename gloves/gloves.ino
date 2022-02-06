@@ -5,10 +5,12 @@
 
 #define SUCCESS 0
 #define ERROR -1
-#define CAPTOUCH_PIN 1
+#define CAPTOUCH_PIN 2
 // TODO: Update this for neopixel
-#define LED_PIN 3
-#define CLK_PIN 4
+#define LED_PIN 1
+// Needed for internal dotstar
+// #define LED_PIN 3
+// #define CLK_PIN 4
 #define LED_COUNT 1
 #define CHANGE_COLOR 0
 #define MAX_STATIONARY 248
@@ -65,8 +67,8 @@ void setup() {
     }
     setBaseTouch();
 
-    // FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
-    FastLED.addLeds<DOTSTAR, LED_PIN, CLK_PIN, GBR>(strip, LED_COUNT);
+    FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
+    // FastLED.addLeds<DOTSTAR, LED_PIN, CLK_PIN, GBR>(strip, LED_COUNT);
     FastLED.setMaxPowerInVoltsAndMilliamps(3, 350);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
         ctx->strip = strip;
@@ -94,6 +96,8 @@ void loop() {
         // if (ctx[idx].brightness < CHANGE_COLOR && !ctx->toggledColor) {
         if (checkPress()) {
             color = uint8_t(random(HUE_RED, HUE_YELLOW - 16));
+            Serial.println("color:");
+            Serial.println(color);
         //     ctx->toggledColor = true;
         } else {
             color = ctx[idx].color;
