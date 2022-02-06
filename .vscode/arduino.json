@@ -1,8 +1,7 @@
 {
-    "board": "adafruit:samd:adafruit_circuitplayground_m0",
-    "configuration": "opt=small,usbstack=arduino,debug=on",
-    "port": "COM5",
-    "programmer": "adafruit:adafruit_jlink",
-    "sketch": "toolTesting.ino",
-    "output": "../build"
+    "configuration": "opt=small,usbstack=tinyusb,debug=off",
+    "board": "adafruit:samd:adafruit_gemma_m0",
+    "sketch": "gloves\\gloves.ino",
+    "output": "../build",
+    "port": "COM9"
 }

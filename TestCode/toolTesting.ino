@@ -14,7 +14,7 @@
 #define CHANGE_COLOR 36
 #define RANGE 8
 #define FPS 10
-#define SENSOR_SENSITIVITY LIS3DH_RANGE_8_G
+#define SENSOR_SENSITIVITY LIS3DH_RANGE_4_G
 #define GRAVITY 9.8
 
 typedef struct firectx {
@@ -31,6 +31,7 @@ float max_sensor_value = 0;
 float avg = 0.0;
 
 void setup() {
+    Serial1.begin(115200);
     randomSeed(analogRead(9)); // Just make sure that this is unconnected.
     if (! lis.begin(ACCEL_ADDR)) {   // Express has 0x19
         while (1) yield();
@@ -67,13 +68,35 @@ void loop() {
 
 float calculateMagnitude() {
     sensors_event_t event = {0};
-    float avgs = 0;
+    float pitch = 0;
+    float roll = 0;
     lis.getEvent(&event);
-    avgs += (event.acceleration.x / max_sensor_value);
-    avgs += (event.acceleration.y / max_sensor_value);
-    avgs += (event.acceleration.z / max_sensor_value);
-    avgs /= 3;
-    return avgs;
+    pitch = atan(
+        event.acceleration.y / (
+            sqrtf(
+                pow(event.acceleration.x, 2.0) + pow(event.acceleration.z, 2.0)
+                )
+            )
+        );
+    roll = atan(
+            -1* event.acceleration.x / event.acceleration.z
+        );
+    Serial1.print("X:");
+    Serial1.print(event.acceleration.x / max_sensor_value);
+    Serial1.print("\n");
+    Serial1.print("Y:");
+    Serial1.print(event.acceleration.y / max_sensor_value);
+    Serial1.print("\n");
+    Serial1.print("Z:");
+    Serial1.print(event.acceleration.z / max_sensor_value);
+    Serial1.print("\n");
+    Serial1.print("Roll:");
+    Serial1.print(roll);
+    Serial1.print("\n");
+    Serial1.print("Pitch:");
+    Serial1.print(pitch);
+    Serial1.print("\n");
+    return pitch;
 }
 
 void setLed(firectx* ctx) {
