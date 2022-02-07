@@ -1,4 +1,5 @@
 #include <FastLED.h>
+#include <Adafruit_NeoPixel.h>
 #include <Adafruit_FreeTouch.h>
 #include <Wire.h>
 
@@ -11,7 +12,8 @@
 // Needed for internal dotstar
 // #define LED_PIN 3
 // #define CLK_PIN 4
-#define LED_COUNT 1
+#define LED_COUNT 60
+// #define LED_TYPE SK6812
 #define CHANGE_COLOR 0
 #define MAX_STATIONARY 248
 #define SPEED 2
@@ -64,14 +66,13 @@ void setup() {
     int8_t error = 0;
     if (!capButton.begin()) {
         Serial.println("Error with free touch init.");
+        foreverError();
     }
     setBaseTouch();
-
     FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
-    // FastLED.addLeds<DOTSTAR, LED_PIN, CLK_PIN, GBR>(strip, LED_COUNT);
-    FastLED.setMaxPowerInVoltsAndMilliamps(3, 350);
+    // FastLED.setMaxPowerInVoltsAndMilliamps(3, 350);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
-        ctx->strip = strip;
+        // ctx->strip = strip;
         error = setContext(
             &ctx[i],
             MAX_STATIONARY/2,
@@ -89,30 +90,34 @@ void setup() {
 void loop() {
     int8_t error = 0;
     uint8_t color = 0;
+    bool update_color = false;
+    if (checkPress()) {
+        update_color = true;
+    }
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
         error = sinWave(&ctx[idx]);
         if (error < SUCCESS) foreverError();
 
-        // if (ctx[idx].brightness < CHANGE_COLOR && !ctx->toggledColor) {
-        if (checkPress()) {
+        if (update_color) {
             color = uint8_t(random(HUE_RED, HUE_YELLOW - 16));
-            Serial.println("color:");
-            Serial.println(color);
-        //     ctx->toggledColor = true;
         } else {
             color = ctx[idx].color;
-            // ctx->toggledColor = false;
         }
         error = setPixelColor(&ctx[idx], color);
         if (error < SUCCESS) foreverError();
     }
-
+    if(update_color) {
+        update_color = false;
+    }
     FastLED.show();
     FastLED.delay(1000/FPS);
 }
 
 void foreverError() {
-    while (1) yield();
+    while (1){
+        // Serial.println("Error with free touch init.");
+        yield();
+    }
 }
 
 int setContext(
@@ -143,14 +148,15 @@ int sinWave(firectx* ctx) {
 
 int setPixelColor(firectx* ctx, uint8_t color) {
     ctx->color = color;
-    ctx->strip[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
+    // TODO: I want to break this out at some point...
+    strip[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
     return SUCCESS;
 }
 
 bool checkPress() {
     bool touched = false;
     long measurement = capButton.measure();
-    Serial.println(measurement);
+    // Serial.println(measurement);
     // Only check if we've seen a change in the measurement
     if (measurement > (base_touch_measurement + MEASURE_TOUCH)
      && previous_measurement < (base_touch_measurement + MEASURE_TOUCH)
