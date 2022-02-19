@@ -1,0 +1,7 @@
+{
+    "board": "adafruit:samd:adafruit_gemma_m0",
+    "port": "COM9",
+    "sketch": "dress.ino",
+    "output": "../build",
+    "configuration": "opt=small,usbstack=tinyusb,debug=off"
+}

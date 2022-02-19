@@ -12,7 +12,7 @@
 // Needed for internal dotstar
 // #define LED_PIN 3
 // #define CLK_PIN 4
-#define LED_COUNT 60
+#define LED_COUNT 20
 // #define LED_TYPE SK6812
 #define CHANGE_COLOR 0
 #define MAX_STATIONARY 248
@@ -70,9 +70,7 @@ void setup() {
     }
     setBaseTouch();
     FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
-    // FastLED.setMaxPowerInVoltsAndMilliamps(3, 350);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
-        // ctx->strip = strip;
         error = setContext(
             &ctx[i],
             MAX_STATIONARY/2,

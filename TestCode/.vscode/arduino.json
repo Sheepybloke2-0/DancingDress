@@ -1,7 +1,7 @@
 {
     "board": "adafruit:samd:adafruit_circuitplayground_m0",
     "configuration": "opt=small,usbstack=arduino,debug=on",
-    "port": "COM5",
+    "port": "COM9",
     "programmer": "adafruit:adafruit_jlink",
     "sketch": "toolTesting.ino",
     "output": "../build"

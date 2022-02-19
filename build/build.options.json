@@ -1,0 +1,12 @@
+{
+  "additionalFiles": "",
+  "builtInLibrariesFolders": "C:\\Program Files (x86)\\Arduino\\libraries",
+  "builtInToolsFolders": "C:\\Program Files (x86)\\Arduino\\tools-builder,C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr,C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages",
+  "compiler.optimization_flags": "",
+  "customBuildProperties": "build.path=c:\\Users\\rtl55\\OneDrive\\PersonalProjs\\danceStuff\\DancingDress\\build,build.warn_data_percentage=75,runtime.tools.bossac.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\bossac\\1.7.0-arduino3,runtime.tools.bossac-1.9.1-arduino2.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\bossac\\1.9.1-arduino2,runtime.tools.arduinoOTA.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arduinoOTA\\1.2.1,runtime.tools.arduinoOTA-1.2.1.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arduinoOTA\\1.2.1,runtime.tools.arm-none-eabi-gcc.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\arm-none-eabi-gcc\\9-2019q4,runtime.tools.arm-none-eabi-gcc-9-2019q4.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\arm-none-eabi-gcc\\9-2019q4,runtime.tools.bossac-1.7.0-arduino3.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\bossac\\1.7.0-arduino3,runtime.tools.openocd.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\openocd\\0.10.0-arduino7,runtime.tools.openocd-0.10.0-arduino7.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\openocd\\0.10.0-arduino7,runtime.tools.CMSIS-Atmel.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\CMSIS-Atmel\\1.2.2,runtime.tools.CMSIS-Atmel-1.2.2.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\CMSIS-Atmel\\1.2.2,runtime.tools.CMSIS.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\CMSIS\\5.4.0,runtime.tools.CMSIS-5.4.0.path=C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages\\adafruit\\tools\\CMSIS\\5.4.0",
+  "fqbn": "adafruit:samd:adafruit_gemma_m0:opt=small,usbstack=tinyusb,debug=off",
+  "hardwareFolders": "C:\\Program Files (x86)\\Arduino\\hardware,C:\\Users\\rtl55\\AppData\\Local\\Arduino15\\packages",
+  "otherLibrariesFolders": "C:\\Users\\rtl55\\OneDrive\\Documents\\Arduino\\libraries",
+  "runtime.ide.version": "10815",
+  "sketchLocation": "c:\\Users\\rtl55\\OneDrive\\PersonalProjs\\danceStuff\\DancingDress\\dress\\dress.ino"
+}
