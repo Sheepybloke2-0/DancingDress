@@ -1,18 +1,14 @@
-#define ARDUINO_GEMMA_M0 1
 #include <FastLED.h>
 #include <Wire.h>
 #include <math.h>
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
-// #include <Adafruit_NeoPixel.h>
 
 #define SUCCESS 0
 #define ERROR -1
-#define LED_PIN 1
-#define LED_COUNT 1
-#define ACCEL_ADDR 0x18
-#define ACCEL_SDC 2
-#define ACCEL_SDA 0
+#define LED_PIN 6
+#define LED_COUNT 20
+#define ACCEL_ADDR 0x19
 #define ACCEL_RANGE LIS3DH_RANGE_4_G
 #define ACCEL_READINGS 5
 #define GRAVITY 9.8
@@ -44,8 +40,7 @@ typedef struct  {
 
 firectx ctx[LED_COUNT] = {0};
 CRGB strip[LED_COUNT];
-// Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB+NEO_KHZ800);
-Adafruit_LIS3DH accel = Adafruit_LIS3DH();
+Adafruit_LIS3DH accel = Adafruit_LIS3DH(&Wire1);
 float max_sensor_value = 0.0;
 moving_avg avg = {0};
 
@@ -61,85 +56,78 @@ float calculateMagnitude();
 
 void setup() {
     // Need to use TinyUSB stack for this to work.
-    // Serial.begin(115200);
-    // Serial.println("Starting flora...");
-    // int8_t error = 0;
-    // strip.begin();
-    // strip.setBrightness(255);
-    // strip.fill(strip.Color(255,255,0), 0, LED_COUNT);
-    // strip.show();
-    // if (!accel.begin(ACCEL_ADDR)) {
-    //     while(true){
-    //         Serial.println("Couldn't find the ACCELEROMETER!");
-    //         FastLED.delay(500);
-    //     }
-    // }
-    // accel.setRange(ACCEL_RANGE);
-    // if (ACCEL_RANGE == LIS3DH_RANGE_2_G) {
-    //    max_sensor_value = GRAVITY * 2;
-    // } else if (ACCEL_RANGE == LIS3DH_RANGE_4_G) {
-    //    max_sensor_value = GRAVITY * 4;
-    // } else if (ACCEL_RANGE == LIS3DH_RANGE_8_G) {
-    //    max_sensor_value = GRAVITY * 8;
-    // } else if (ACCEL_RANGE == LIS3DH_RANGE_16_G) {
-    //    max_sensor_value = GRAVITY * 16;
-    // } else {
-    //    max_sensor_value = GRAVITY;
-    // }
+    Serial.begin(115200);
+    Serial.println("Starting flora...");
+    int8_t error = 0;
+    if (!accel.begin(ACCEL_ADDR)) {
+        while(true){
+            Serial.println("Couldn't find the ACCELEROMETER!");
+            FastLED.delay(500);
+        }
+    }
+    accel.setRange(ACCEL_RANGE);
+    if (ACCEL_RANGE == LIS3DH_RANGE_2_G) {
+       max_sensor_value = GRAVITY * 2;
+    } else if (ACCEL_RANGE == LIS3DH_RANGE_4_G) {
+       max_sensor_value = GRAVITY * 4;
+    } else if (ACCEL_RANGE == LIS3DH_RANGE_8_G) {
+       max_sensor_value = GRAVITY * 8;
+    } else if (ACCEL_RANGE == LIS3DH_RANGE_16_G) {
+       max_sensor_value = GRAVITY * 16;
+    } else {
+       max_sensor_value = GRAVITY;
+    }
     FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
-    FastLED.setBrightness(255);
-    FastLED.clear();
-    // for (uint8_t i = 0; i < LED_COUNT; i++) {
+    for (uint8_t i = 0; i < LED_COUNT; i++) {
 
-        // strip[i] = CRGB::Red;
-        // error = setContext(
-        //     &ctx[i],
-        //     MAX_STATIONARY/2,
-        //     random(HUE_RED, HUE_ORANGE),
-        //     i
-        // );
-        // if (error < SUCCESS) {
-        //     foreverError();
-        // }
-    // }
+        strip[i] = CRGB::Red;
+        error = setContext(
+            &ctx[i],
+            MAX_STATIONARY/2,
+            random(HUE_RED, HUE_ORANGE),
+            i
+        );
+        if (error < SUCCESS) {
+            foreverError();
+        }
+    }
 
     FastLED.show();
 }
 
 void loop() {
-    // int8_t error = 0;
-    // uint8_t color = 0;
-    // uint8_t speed = MAX_FREQ;
-    // uint8_t freq = MAX_FREQ;
+    int8_t error = 0;
+    uint8_t color = 0;
+    uint8_t speed = 0;
+    uint8_t freq = 0;
 
-    // float mag = calculateMagnitude();
-    // float mag = 0.10;
+    float mag = calculateMagnitude();
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
-        strip[idx] = CRGB::Red;
-    //     error = sinWave(&ctx[idx]);
-    //     if (error < SUCCESS) foreverError();
+        error = sinWave(&ctx[idx]);
+        if (error < SUCCESS) foreverError();
 
-    //     if (ctx[idx].brightness <= CHANGE_COLOR && ctx[idx].toggledColor == false) {
-    //         color = uint8_t(random(HUE_RED, HUE_ORANGE));
-    //         // if (mag < 0.10) {
-    //         //     speed = uint8_t(MAX_SPEED/3);
-    //         //     freq = uint8_t(MAX_FREQ/3);
-    //         // } else if (mag < 0.20) {
-    //         //     speed = uint8_t(MAX_SPEED * (2/3));
-    //         //     freq = uint8_t(MAX_FREQ * (2/3));
-    //         // } else {
-    //         //     speed = MAX_SPEED;
-    //         //     freq = MAX_FREQ;
-    //         // }
-    //         ctx[idx].speed = uint8_t(random(1,speed));
-    //         ctx[idx].freq = uint8_t(random(1,freq));
-    //         ctx[idx].toggledColor = true;
-    //     } else {
-    //         color = ctx[idx].color;
-    //         ctx[idx].toggledColor = false;
-    //     }
-    //     error = setPixelColor(&ctx[idx], color);
-    //     if (error < SUCCESS) foreverError();
+        if ((ctx[idx].brightness <= CHANGE_COLOR || mag >= 0.20 )
+          && ctx[idx].toggledColor == false) {
+            color = uint8_t(random(HUE_RED, HUE_ORANGE));
+            if (mag < 0.10) {
+                speed = uint8_t(MAX_SPEED/3);
+                freq = uint8_t(MAX_FREQ/3);
+            } else if (mag < 0.20) {
+                speed = uint8_t(MAX_SPEED * (2/3));
+                freq = uint8_t(MAX_FREQ * (2/3));
+            } else {
+                speed = MAX_SPEED;
+                freq = MAX_FREQ;
+            }
+            ctx[idx].speed = uint8_t(random(3,speed));
+            ctx[idx].freq = uint8_t(random(3,freq));
+            ctx[idx].toggledColor = true;
+        } else {
+            color = ctx[idx].color;
+            ctx[idx].toggledColor = false;
+        }
+        error = setPixelColor(&ctx[idx], color);
+        if (error < SUCCESS) foreverError();
     }
 
     FastLED.show();

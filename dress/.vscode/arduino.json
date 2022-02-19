@@ -1,7 +1,7 @@
 {
-    "board": "adafruit:samd:adafruit_gemma_m0",
-    "port": "COM9",
+    "board": "adafruit:samd:adafruit_circuitplayground_m0",
+    "port": "COM19",
     "sketch": "dress.ino",
     "output": "../build",
-    "configuration": "opt=small,usbstack=tinyusb,debug=off"
+    "configuration": "opt=small,usbstack=tinyusb,debug=on"
 }
