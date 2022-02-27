@@ -8,8 +8,8 @@
 #define ACCEL_ADDR 0x19
 #define LEFT_BUTTON 4
 #define RIGHT_BUTTON 5
-#define LED_PIN 8
-#define LED_COUNT 10
+#define LED_PIN 6
+#define LED_COUNT 20
 #define MAX_STATIONARY 248
 #define CHANGE_COLOR 36
 #define RANGE 8

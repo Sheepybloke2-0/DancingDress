@@ -1,19 +1,13 @@
 #include <FastLED.h>
-#include <Adafruit_NeoPixel.h>
+// #include <Adafruit_NeoPixel.h>
 #include <Adafruit_FreeTouch.h>
 #include <Wire.h>
-
 
 #define SUCCESS 0
 #define ERROR -1
 #define CAPTOUCH_PIN 2
-// TODO: Update this for neopixel
 #define LED_PIN 1
-// Needed for internal dotstar
-// #define LED_PIN 3
-// #define CLK_PIN 4
-#define LED_COUNT 20
-// #define LED_TYPE SK6812
+#define LED_COUNT 1
 #define CHANGE_COLOR 0
 #define MAX_STATIONARY 248
 #define SPEED 2
@@ -28,7 +22,6 @@
 #endif
 
 typedef struct  {
-    CRGB* strip;
     uint8_t index;
     uint8_t brightness;
     uint8_t color;
@@ -36,9 +29,8 @@ typedef struct  {
     bool toggledColor;
 } firectx;
 
-
 firectx ctx[LED_COUNT] = {0};
-CRGB strip[LED_COUNT];
+CRGB leds[LED_COUNT];
 Adafruit_FreeTouch capButton =
     Adafruit_FreeTouch(
         CAPTOUCH_PIN,
@@ -69,16 +61,23 @@ void setup() {
         foreverError();
     }
     setBaseTouch();
-    FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
+    Serial.println("Captouch setup");
+    FastLED.delay(2000);
+    FastLED.addLeds<NEOPIXEL, LED_PIN>(leds, LED_COUNT);
+    Serial.println("Setup LED strip");
+    FastLED.clear(true);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
+        Serial.print("Adding ");
+        Serial.print(i);
+        Serial.print("\n");
         error = setContext(
             &ctx[i],
-            MAX_STATIONARY/2,
-            random(HUE_RED, HUE_YELLOW - 16),
+            MAX_STATIONARY,
+            uint8_t(random(HUE_RED, HUE_YELLOW - 16)),
             i
         );
         if (error < SUCCESS) {
-            foreverError();
+            Serial.println("The fuck");
         }
     }
 
@@ -140,14 +139,22 @@ int sinWave(firectx* ctx) {
     } else if (ctx->brightness < CHANGE_COLOR) {
         ctx->brightness = 0;
     }
-    // Serial.println(ctx->brightness);
+    Serial.print("Idx ");
+    Serial.print(ctx->index);
+    Serial.print(" brightness ");
+    Serial.print(ctx->brightness);
+    Serial.print(" phase ");
+    Serial.print(ctx->phase);
     return SUCCESS;
 }
 
 int setPixelColor(firectx* ctx, uint8_t color) {
     ctx->color = color;
+    Serial.print("Color ");
+    Serial.print(ctx->color);
+    Serial.print("\n");
     // TODO: I want to break this out at some point...
-    strip[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
+    leds[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
     return SUCCESS;
 }
 
