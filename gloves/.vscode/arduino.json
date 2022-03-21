@@ -1,7 +1,8 @@
 {
     "sketch": "gloves.ino",
-    "configuration": "opt=small,usbstack=tinyusb,debug=on",
     "board": "adafruit:samd:adafruit_gemma_m0",
-    "port": "COM9",
-    "output": "./build"
+    "port": "COM11",
+    "output": "./build",
+    "programmer": "adafruit:adafruit_jlink",
+    "configuration": "opt=small,usbstack=tinyusb,debug=on"
 }
