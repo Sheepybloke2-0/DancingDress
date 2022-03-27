@@ -1,6 +1,5 @@
 #include <FastLED.h>
 #include <lib8tion.h>
-// #include <Adafruit_NeoPixel.h>
 #include <Adafruit_FreeTouch.h>
 #include <Wire.h>
 
@@ -22,11 +21,6 @@
 #endif
 
 typedef enum {
-    GREEN = 0,
-    PURPLE = 1,
-} color_range;
-
-typedef enum {
     UP = 0,
     DOWN = 1,
 } Direction;
@@ -43,7 +37,6 @@ typedef struct  {
     uint8_t index;
     uint8_t brightness;
     uint8_t color;
-    color_range range;
     uint8_t phase;
     uint8_t offset;
     uint8_t speed;
@@ -223,24 +216,12 @@ void swirlUp(firectx* ctx) {
         ctx->brightness = 0;
         ctx->phase = 0;
         ctx->speed = 4;
-        ctx->range = color_range(random8(PURPLE + 1));
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-            ctx->range = PURPLE;
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 8, HUE_PURPLE + 8);
-            ctx->range = GREEN;
-        }
+        ctx->color = random8(HUE_PURPLE - 8, HUE_PURPLE + 8);
         ctx->set_style = SWIRLUP;
     }
     sinWave(ctx, UP);
     if (ctx->brightness <= CHANGE_COLOR) {
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
-        }
-        ctx->range = color_range(random8(PURPLE + 1));
+        ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
     }
     setPixelColor(ctx, ctx->color);
 }
@@ -251,24 +232,12 @@ void swirlDown(firectx* ctx) {
         ctx->brightness = 0;
         ctx->phase = 0;
         ctx->speed = 4;
-        ctx->range = color_range(random8(PURPLE + 1));
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-            ctx->range = PURPLE;
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 8, HUE_PURPLE + 8);
-            ctx->range = GREEN;
-        }
+        ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
         ctx->set_style = SWIRLDOWN;
     }
     sinWave(ctx, DOWN);
     if (ctx->brightness <= CHANGE_COLOR) {
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
-        }
-        ctx->range = color_range(random8(PURPLE + 1));
+        ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
     }
     setPixelColor(ctx, ctx->color);
 }
@@ -278,12 +247,7 @@ void lightning(firectx* ctx, uint8_t led) {
         ctx->offset = 0;
         ctx->phase = 0;
         ctx->set_style = LIGHTNING;
-        ctx->range = color_range(random8(PURPLE + 1));
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 8, HUE_PURPLE + 8);
-        }
+        ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
 
         if (led == ctx->index) {
             ctx->brightness = MAX_STATIONARY;
@@ -314,24 +278,12 @@ void randomBreathing(firectx* ctx) {
         ctx->brightness = 0;
         ctx->phase = random8((ctx->index + 1) * 8);
         ctx->speed = random8(2, 7);
-        ctx->range = color_range(random8(PURPLE + 1));
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-            ctx->range = PURPLE;
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 8, HUE_PURPLE + 8);
-            ctx->range = GREEN;
-        }
+        ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
         ctx->set_style = RANDOMBREATHING;
     }
     sinWave(ctx, UP);
     if (ctx->brightness <= CHANGE_COLOR) {
-        if (ctx->range == GREEN) {
-            ctx->color = random8(HUE_GREEN - 8, HUE_GREEN + 8);
-        } else if (ctx->range == PURPLE) {
-            ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
-        }
-        ctx->range = color_range(random8(PURPLE + 1));
+        ctx->color = random8(HUE_PURPLE - 16, HUE_PURPLE + 8);
         ctx->offset = random8((ctx->index + 1) * 8);
         ctx->phase = random8((ctx->index + 1) * 8);
         ctx->speed = random8(2, 7);
@@ -342,7 +294,7 @@ void randomBreathing(firectx* ctx) {
 void setPixelColor(firectx* ctx, uint8_t color) {
     ctx->color = color;
     // TODO: I want to break this out at some point...
-    leds[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
+    leds[ctx->index] = CHSV(ctx->color, 32, ctx->brightness);
 }
 
 bool checkPress() {
