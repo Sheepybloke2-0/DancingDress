@@ -10,13 +10,10 @@
 #define ACCEL_ADDR 0x18
 #define ACCEL_SCL 2
 #define ACCEL_SDA 0
-#define ACCEL_RANGE LIS3DH_RANGE_4_G
+#define ACCEL_RANGE LIS3DH_RANGE_2_G
 #define ACCEL_READINGS 5
 #define GRAVITY 9.8
 #define CHANGE_COLOR 8
-#define MAX_STATIONARY 248
-#define MAX_SPEED 24
-#define MAX_FREQ 24
 #define FPS 10
 
 #if defined(ARDUINO_SAMD_ZERO) && defined(SERIAL_PORT_USBVIRTUAL)
@@ -24,12 +21,17 @@
   #define Serial SERIAL_PORT_USBVIRTUAL
 #endif
 
+typedef enum {
+    UP = 0,
+    DOWN = 1,
+} Direction;
+
 typedef struct  {
     uint8_t index;
     uint8_t brightness;
     uint8_t color;
     uint8_t phase;
-    uint8_t freq;
+    uint8_t offset;
     uint8_t speed;
     bool toggledColor;
 } firectx;
@@ -47,11 +49,10 @@ moving_avg avg = {0};
 
 void setContext(
     firectx* ctx,
-    uint8_t default_brightness,
     uint8_t color,
     uint8_t index
 );
-void sinWave(firectx* ctx);
+void sinWave(firectx* ctx, Direction direction, uint8_t max_brightness);
 void setPixelColor(firectx* ctx, uint8_t color);
 float calculateMagnitude();
 
@@ -82,8 +83,7 @@ void setup() {
         strip[i] = CRGB::Red;
         setContext(
             &ctx[i],
-            MAX_STATIONARY/2,
-            random(HUE_RED, HUE_ORANGE),
+            random(HUE_RED, HUE_ORANGE - 8),
             i
         );
     }
@@ -95,33 +95,26 @@ void loop() {
     int8_t error = 0;
     uint8_t color = 0;
     uint8_t speed = 0;
-    uint8_t freq = 0;
+    uint8_t max_brightness = 0;
 
     float mag = calculateMagnitude();
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
-        sinWave(&ctx[idx]);
-
-        if ((ctx[idx].brightness <= CHANGE_COLOR || mag >= 0.20 )
-          && ctx[idx].toggledColor == false) {
-            color = uint8_t(random(HUE_RED, HUE_ORANGE));
-            if (mag < 0.10) {
-                speed = uint8_t(MAX_SPEED/3);
-                freq = uint8_t(MAX_FREQ/3);
-            } else if (mag < 0.20) {
-                speed = uint8_t(MAX_SPEED * (2/3));
-                freq = uint8_t(MAX_FREQ * (2/3));
-            } else {
-                speed = MAX_SPEED;
-                freq = MAX_FREQ;
-            }
-            ctx[idx].speed = uint8_t(random(3,speed));
-            ctx[idx].freq = uint8_t(random(3,freq));
-            ctx[idx].toggledColor = true;
+        if (mag < 85.0) {
+            ctx[idx].speed = 12;
+            max_brightness = 255;
+        } else if (mag < 125) {
+            ctx[idx].speed = 4;
+            max_brightness = 212;
         } else {
-            color = ctx[idx].color;
-            ctx[idx].toggledColor = false;
+            ctx[idx].speed = 2;
+            max_brightness = 164;
         }
-        setPixelColor(&ctx[idx], color);
+        sinWave(&ctx[idx], UP, max_brightness);
+        if (ctx[idx].brightness <= CHANGE_COLOR) {
+            ctx[idx].color = random8(HUE_RED, HUE_ORANGE - 8);
+            ctx[idx].phase = random8(2, 254);
+        }
+        setPixelColor(&ctx[idx], ctx[idx].color);
     }
 
     FastLED.show();
@@ -137,28 +130,29 @@ void foreverError() {
 
 void setContext(
     firectx* ctx,
-    uint8_t default_brightness,
     uint8_t color,
     uint8_t index
 ) {
     ctx->index = index;
-    ctx->brightness = default_brightness;
-    ctx->phase = uint8_t(random(24));
-    ctx->speed = uint8_t(random(1,24));
-    ctx->freq = uint8_t(random(1,24));
+    ctx->brightness = 0;
+    ctx->phase = random8((index + 1) * 8);
+    ctx->speed = random8(2,7);
     ctx->toggledColor = false;
     setPixelColor(ctx, color);
 }
 
-void sinWave(firectx* ctx) {
-    ctx->phase += ctx->speed;
-    ctx->brightness = quadwave8(ctx->freq*ctx->phase);
-    if (ctx->brightness > MAX_STATIONARY) {
-        ctx->brightness = MAX_STATIONARY;
-    } else if (ctx->brightness < CHANGE_COLOR) {
-        ctx->brightness = CHANGE_COLOR;
+void sinWave(firectx* ctx, Direction dir, uint8_t max_brightness) {
+    if (dir == UP) {
+        ctx->phase += ctx->speed;
+    } else {
+        ctx->phase -= ctx->speed;
     }
-    Serial.println(ctx->brightness);
+    ctx->brightness = quadwave8(ctx->phase + ctx->offset);
+    if (ctx->brightness > max_brightness) {
+        ctx->brightness = max_brightness;
+    } else if (ctx->brightness <= CHANGE_COLOR) {
+        ctx->brightness = 0;
+    }
 }
 
 void setPixelColor(firectx* ctx, uint8_t color) {
@@ -171,10 +165,13 @@ float calculateMagnitude() {
     sensors_event_t event = {0};
     accel.getEvent(&event);
     float cur_avg = 0;
-    cur_avg += abs(event.acceleration.x / max_sensor_value);
-    // avg += abs(event.acceleration.y / max_sensor_value);
-    cur_avg += abs(event.acceleration.z / max_sensor_value);
-    cur_avg /= 2;
+    cur_avg = 180 *
+        atan(event.acceleration.y /
+        sqrt(
+            event.acceleration.x*event.acceleration.x
+            + event.acceleration.z*event.acceleration.z
+        )
+    );
     avg.accel_readings[avg.index] = cur_avg;
     avg.index++;
     if (avg.index >= ACCEL_READINGS) {
@@ -186,18 +183,18 @@ float calculateMagnitude() {
     }
     cur_avg /= ACCEL_READINGS;
 
-    // Serial.print("X:");
-    // Serial.print(event.acceleration.x / max_sensor_value);
-    // Serial.print("\n");
-    // Serial.print("Y:");
-    // Serial.print(event.acceleration.y / max_sensor_value);
-    // Serial.print("\n");
-    // Serial.print("Z:");
-    // Serial.print(event.acceleration.z / max_sensor_value);
-    // Serial.print("\n");
-    // Serial.print("avg:");
-    // Serial.print(cur_avg);
-    // Serial.print("\n");
+    Serial.print("X:");
+    Serial.print(event.acceleration.x / max_sensor_value);
+    Serial.print("\n");
+    Serial.print("Y:");
+    Serial.print(event.acceleration.y / max_sensor_value);
+    Serial.print("\n");
+    Serial.print("Z:");
+    Serial.print(event.acceleration.z / max_sensor_value);
+    Serial.print("\n");
+    Serial.print("avg:");
+    Serial.print(cur_avg);
+    Serial.print("\n");
     return cur_avg;
 }
 
