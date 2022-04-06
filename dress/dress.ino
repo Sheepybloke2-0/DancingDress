@@ -11,8 +11,8 @@
 #define ACCEL_SCL 2
 #define ACCEL_SDA 0
 #define ACCEL_RANGE LIS3DH_RANGE_2_G
-#define SMALL_MOVEMENT_THRESHOLD 1.0
-#define LARGE_MOVEMENT_THRESHOLD 5.0
+#define SMALL_MOVEMENT_THRESHOLD 3.0
+#define LARGE_MOVEMENT_THRESHOLD 6.0
 #define CHANGE_COLOR 8
 #define FPS 10
 
@@ -84,13 +84,10 @@ void loop() {
     double mag_diff = abs(mag - old_mag);
     if (mag_diff >  LARGE_MOVEMENT_THRESHOLD) {
         speed = 12;
-        max_brightness = 255;
     } else if (mag_diff > SMALL_MOVEMENT_THRESHOLD) {
         speed = 8;
-        max_brightness = 200;
     } else {
         speed = 4;
-        max_brightness = 128;
     }
     old_mag = mag;
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
@@ -100,6 +97,14 @@ void loop() {
             ctx[idx].color = random8(HUE_RED, HUE_ORANGE - 16);
             ctx[idx].phase = random8(2, 254);
             ctx[idx].offset = random8(1, 32);
+
+            if (mag_diff >  LARGE_MOVEMENT_THRESHOLD) {
+                max_brightness = 255;
+            } else if (mag_diff > SMALL_MOVEMENT_THRESHOLD) {
+                max_brightness = 192;
+            } else {
+                max_brightness = 128;
+            }
         }
         setPixelColor(&ctx[idx], ctx[idx].color);
     }
