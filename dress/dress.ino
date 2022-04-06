@@ -11,8 +11,8 @@
 #define ACCEL_SCL 2
 #define ACCEL_SDA 0
 #define ACCEL_RANGE LIS3DH_RANGE_2_G
-#define ACCEL_READINGS 5
-#define GRAVITY 9.8
+#define SMALL_MOVEMENT_THRESHOLD 1.0
+#define LARGE_MOVEMENT_THRESHOLD 5.0
 #define CHANGE_COLOR 8
 #define FPS 10
 
@@ -36,16 +36,10 @@ typedef struct  {
     bool toggledColor;
 } firectx;
 
-typedef struct  {
-    float accel_readings[ACCEL_READINGS];
-    uint8_t index;
-} moving_avg;
-
 firectx ctx[LED_COUNT] = {0};
 CRGB strip[LED_COUNT];
 Adafruit_LIS3DH accel = Adafruit_LIS3DH();
-float max_sensor_value = 0.0;
-moving_avg avg = {0};
+double old_mag = 0.0;
 
 void setContext(
     firectx* ctx,
@@ -54,7 +48,7 @@ void setContext(
 );
 void sinWave(firectx* ctx, Direction direction, uint8_t max_brightness);
 void setPixelColor(firectx* ctx, uint8_t color);
-float calculateMagnitude();
+double calculateMagnitude();
 
 void setup() {
     // Need to use TinyUSB stack for this to work.
@@ -67,17 +61,6 @@ void setup() {
         }
     }
     accel.setRange(ACCEL_RANGE);
-    if (ACCEL_RANGE == LIS3DH_RANGE_2_G) {
-       max_sensor_value = GRAVITY * 2;
-    } else if (ACCEL_RANGE == LIS3DH_RANGE_4_G) {
-       max_sensor_value = GRAVITY * 4;
-    } else if (ACCEL_RANGE == LIS3DH_RANGE_8_G) {
-       max_sensor_value = GRAVITY * 8;
-    } else if (ACCEL_RANGE == LIS3DH_RANGE_16_G) {
-       max_sensor_value = GRAVITY * 16;
-    } else {
-       max_sensor_value = GRAVITY;
-    }
     FastLED.addLeds<NEOPIXEL, LED_PIN>(strip, LED_COUNT);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
         strip[i] = CRGB::Red;
@@ -97,22 +80,26 @@ void loop() {
     uint8_t speed = 0;
     uint8_t max_brightness = 0;
 
-    float mag = calculateMagnitude();
+    double mag = calculateMagnitude();
+    double mag_diff = abs(mag - old_mag);
+    if (mag_diff >  LARGE_MOVEMENT_THRESHOLD) {
+        speed = 12;
+        max_brightness = 255;
+    } else if (mag_diff > SMALL_MOVEMENT_THRESHOLD) {
+        speed = 8;
+        max_brightness = 200;
+    } else {
+        speed = 4;
+        max_brightness = 128;
+    }
+    old_mag = mag;
     for (uint8_t idx = 0; idx < LED_COUNT; idx++) {
-        if (mag < 85.0) {
-            ctx[idx].speed = 12;
-            max_brightness = 255;
-        } else if (mag < 125) {
-            ctx[idx].speed = 4;
-            max_brightness = 212;
-        } else {
-            ctx[idx].speed = 2;
-            max_brightness = 164;
-        }
+        ctx[idx].speed = speed;
         sinWave(&ctx[idx], UP, max_brightness);
         if (ctx[idx].brightness <= CHANGE_COLOR) {
-            ctx[idx].color = random8(HUE_RED, HUE_ORANGE - 8);
+            ctx[idx].color = random8(HUE_RED, HUE_ORANGE - 16);
             ctx[idx].phase = random8(2, 254);
+            ctx[idx].offset = random8(1, 32);
         }
         setPixelColor(&ctx[idx], ctx[idx].color);
     }
@@ -136,6 +123,7 @@ void setContext(
     ctx->index = index;
     ctx->brightness = 0;
     ctx->phase = random8((index + 1) * 8);
+    ctx->offset = random8((index + 1) * 8);
     ctx->speed = random8(2,7);
     ctx->toggledColor = false;
     setPixelColor(ctx, color);
@@ -161,40 +149,17 @@ void setPixelColor(firectx* ctx, uint8_t color) {
     strip[ctx->index] = CHSV(ctx->color, 255, ctx->brightness);
 }
 
-float calculateMagnitude() {
+double calculateMagnitude() {
     sensors_event_t event = {0};
     accel.getEvent(&event);
-    float cur_avg = 0;
-    cur_avg = 180 *
-        atan(event.acceleration.y /
-        sqrt(
-            event.acceleration.x*event.acceleration.x
-            + event.acceleration.z*event.acceleration.z
-        )
-    );
-    avg.accel_readings[avg.index] = cur_avg;
-    avg.index++;
-    if (avg.index >= ACCEL_READINGS) {
-        avg.index = 0;
-    }
-    cur_avg = 0;
-    for (uint8_t i = 0; i < ACCEL_READINGS; i++) {
-        cur_avg += avg.accel_readings[i];
-    }
-    cur_avg /= ACCEL_READINGS;
+    double mag = event.acceleration.y * event.acceleration.y;
+    mag += event.acceleration.x * event.acceleration.x;
+    mag += event.acceleration.z * event.acceleration.z;
+    mag = sqrt(mag);
 
-    Serial.print("X:");
-    Serial.print(event.acceleration.x / max_sensor_value);
+    Serial.print("new mag:");
+    Serial.print(mag);
     Serial.print("\n");
-    Serial.print("Y:");
-    Serial.print(event.acceleration.y / max_sensor_value);
-    Serial.print("\n");
-    Serial.print("Z:");
-    Serial.print(event.acceleration.z / max_sensor_value);
-    Serial.print("\n");
-    Serial.print("avg:");
-    Serial.print(cur_avg);
-    Serial.print("\n");
-    return cur_avg;
+    return mag;
 }
 
